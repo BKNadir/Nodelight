@@ -1005,6 +1005,22 @@ Flickable {
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("This will close the app or game you are streaming when you end your stream. You will lose any unsaved progress!")
                 }
+
+                CheckBox {
+                    id: virtualDisplayCheck
+                    width: parent.width
+                    text: qsTr("Use a virtual display on the host (Apollo)")
+                    font.pointSize: 12
+                    checked: StreamingPreferences.virtualDisplay
+                    onCheckedChanged: {
+                        StreamingPreferences.virtualDisplay = checked
+                    }
+
+                    ToolTip.delay: 1000
+                    ToolTip.timeout: 5000
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Asks the host to create a virtual display matching your stream resolution. Requires an Apollo host; other hosts ignore this option.")
+                }
             }
         }
 
