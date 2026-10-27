@@ -764,6 +764,10 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
+    // Nodelight branding for window titles. The application name above is left
+    // untouched on purpose: it names the settings and cache locations.
+    QGuiApplication::setApplicationDisplayName(QStringLiteral("Nodelight"));
+
 #ifdef Q_OS_DARWIN
     // macOS defaults "Keyboard navigation" to text fields and lists only, which
     // prevents Tab (and the gamepad navigation that synthesizes it) from moving
