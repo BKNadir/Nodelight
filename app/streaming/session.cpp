@@ -40,12 +40,25 @@
 #include <QGuiApplication>
 #include <QCursor>
 #include <QScreen>
+#include <QHostAddress>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QQuickOpenGLUtils>
 #endif
 
 #define CONN_TEST_SERVER "qt.conntest.moonlight-stream.org"
+
+// The Nodelight bridge (Tailscale relay shipped with Nodelight) exposes each
+// remote host on its own loopback address in 127.77.0.0/16. Everything sent to
+// those addresses crosses a WireGuard tunnel with a 1280-byte MTU, so such a
+// host must be streamed to like a remote one (1024-byte packets, no
+// 1392-byte "LAN" packets that would be fragmented).
+static bool isTailscaleBridgeAddress(const QString& address)
+{
+    QHostAddress parsed;
+    return parsed.setAddress(address) &&
+            parsed.isInSubnet(QHostAddress(QStringLiteral("127.77.0.0")), 16);
+}
 
 CONNECTION_LISTENER_CALLBACKS Session::k_ConnCallbacks = {
     Session::clStageStarting,
@@ -1679,7 +1692,11 @@ bool Session::startConnectionAsync()
 
         // getActiveAddressReachability() does network I/O, so we only attempt to check
         // reachability if we've already contacted the PC successfully.
-        switch (m_Computer->getActiveAddressReachability()) {
+        NvComputer::ReachabilityType reachability =
+                isTailscaleBridgeAddress(m_Computer->activeAddress.address()) ?
+                    NvComputer::RI_VPN : m_Computer->getActiveAddressReachability();
+
+        switch (reachability) {
         case NvComputer::RI_LAN:
             // This address is on-link, so treat it as a local address
             // even if it's not in RFC 1918 space or it's an IPv6 address.
