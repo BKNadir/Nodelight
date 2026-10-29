@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nodelight — Configuration</title>
+<style>
+  :root {
+    --bg: #130f2e; --card: #1d1745; --line: #342a72; --text: #ece9ff; --muted: #a79fd6;
+    --accent: #8a5cff; --accent2: #3aa0ff; --ok: #3ddc97; --warn: #ffb84d; --bad: #ff6b81;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 2px; }
+  h1 span { background: linear-gradient(90deg, var(--accent2), var(--accent)); -webkit-background-clip: text;
+            background-clip: text; color: transparent; }
+  .sub { color: var(--muted); margin: 0 0 18px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  h2 { font-size: 15px; margin: 0 0 10px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .grow { flex: 1 1 160px; }
+  label { display: block; color: var(--muted); font-size: 12px; margin: 8px 0 3px; }
+  input, select { width: 100%; background: #120d33; color: var(--text); border: 1px solid var(--line);
+                  border-radius: 8px; padding: 8px 10px; font: inherit; }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent2); outline-offset: 1px; }
+  button { background: linear-gradient(90deg, var(--accent2), var(--accent)); color: #fff; border: 0; border-radius: 8px;
+           padding: 8px 14px; font: inherit; font-weight: 600; cursor: pointer; }
+  button.secondary { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 500; }
+  button.danger { background: transparent; border: 1px solid var(--bad); color: var(--bad); font-weight: 500; }
+  button:disabled { opacity: .45; cursor: default; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+          border: 1px solid var(--line); }
+  .pill.running { color: var(--ok); border-color: var(--ok); }
+  .pill.starting, .pill.needs-login { color: var(--warn); border-color: var(--warn); }
+  .pill.error { color: var(--bad); border-color: var(--bad); }
+  .pill.stopped { color: var(--muted); }
+  .msg { margin-top: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); }
+  .msg.warn { border-color: var(--warn); color: var(--warn); }
+  .msg.bad { border-color: var(--bad); color: var(--bad); }
+  .msg a { color: var(--accent2); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 4px 4px 4px 0; vertical-align: middle; }
+  th { text-align: left; color: var(--muted); font-size: 12px; font-weight: 500; padding: 0 4px 4px 0; }
+  td.lb { color: var(--muted); font-family: ui-monospace, Consolas, monospace; font-size: 13px; white-space: nowrap; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .dot.ok { background: var(--ok); } .dot.no { background: var(--bad); }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #000c; border: 1px solid var(--line);
+           padding: 8px 14px; border-radius: 8px; display: none; max-width: 90vw; }
+  #toast.bad { border-color: var(--bad); }
+</style>
+</head>
+<body>
+<main>
+  <h1><span>Nodelight</span> — Configuration</h1>
+  <p class="sub">Connexion Tailscale, nœud de sortie, PC hôtes et profils.</p>
+
+  <section id="s-conn">
+    <h2>Connexion Tailscale</h2>
+    <div class="row">
+      <span id="state" class="pill stopped">…</span>
+      <span id="ip" class="sub" style="margin:0"></span>
+      <span class="grow"></span>
+      <button id="btn-conn">Se connecter</button>
+    </div>
+    <div id="auth" class="msg warn" hidden>
+      Autorisez cet appareil dans votre navigateur :
+      <a id="auth-link" href="#" target="_blank" rel="noopener noreferrer">ouvrir la page de connexion Tailscale</a>
+    </div>
+    <div id="warn" class="msg warn" hidden></div>
+    <div id="err" class="msg bad" hidden></div>
+  </section>
+
+  <section id="s-exit">
+    <h2>Nœud de sortie (exit node)</h2>
+    <p class="hint" style="margin-top:0">À utiliser si votre PC n'est pas sur Tailscale mais qu'un autre appareil de son réseau l'est
+      (Home Assistant, NAS…). Indiquez alors l'adresse locale du PC (192.168.x.y) dans la liste ci-dessous.</p>
+    <label for="exit-sel">Nœud de sortie</label>
+    <div class="row">
+      <select id="exit-sel" class="grow"></select>
+      <button id="btn-exit">Appliquer</button>
+    </div>
+    <div id="exit-other" hidden>
+      <label for="exit-txt">Nom ou IP Tailscale</label>
+      <input id="exit-txt" placeholder="homeassistant ou 100.x.y.z" autocomplete="off" spellcheck="false">
+    </div>
+    <p id="exit-info" class="hint"></p>
+  </section>
+
+  <section id="s-hosts">
+    <h2>PC hôtes (Sunshine / Apollo)</h2>
+    <table>
+      <thead><tr><th>Nom</th><th>Adresse</th><th>Port de base</th><th>À saisir dans Moonlight</th><th></th><th></th></tr></thead>
+      <tbody id="hosts"></tbody>
+    </table>
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" id="btn-add">Ajouter un PC</button>
+      <button id="btn-save">Enregistrer</button>
+    </div>
+    <p class="hint">Adresse : nom ou IP Tailscale du PC, ou son adresse locale si vous utilisez un nœud de sortie.
+      Port de base : laissez vide pour 47989.</p>
+  </section>
+
+  <section id="s-prof">
+    <h2>Profils (réseaux Tailscale)</h2>
+    <p class="hint" style="margin-top:0">Chaque profil a sa propre identité Tailscale et sa liste de PC. Changer de profil
+      relance la connexion.</p>
+    <div class="row">
+      <select id="prof-sel" class="grow"></select>
+      <button id="btn-prof" class="secondary">Utiliser ce profil</button>
+      <button id="btn-prof-del" class="danger">Supprimer</button>
+    </div>
+    <details style="margin-top:12px">
+      <summary>Nouveau profil</summary>
+      <label for="np-name">Nom</label><input id="np-name" maxlength="32" autocomplete="off">
+      <label for="np-url">Serveur de contrôle (facultatif, ex. Headscale)</label>
+      <input id="np-url" placeholder="https://headscale.exemple.fr" autocomplete="off" spellcheck="false">
+      <label for="np-host">Nom de l'appareil (facultatif)</label><input id="np-host" autocomplete="off">
+      <div class="row" style="margin-top:10px"><button id="btn-np">Créer</button></div>
+    </details>
+  </section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+(function () {
+  var params = new URLSearchParams(location.search);
+  var token = params.get("token") || "";
+  try {
+    if (token) { sessionStorage.setItem("nl-token", token); } else { token = sessionStorage.getItem("nl-token") || ""; }
+  } catch (e) { /* storage unavailable: keep the token in memory only */ }
+  if (params.has("token")) { history.replaceState(null, "", location.pathname); }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var last = null;           // last status from the server
+  var editingHosts = false;  // do not overwrite the table while the user is typing
+  var exitKey = "";          // identifies the options currently shown in the exit node list
+  var toastTimer = null;
+
+  var LABELS = { "stopped": "Déconnecté", "starting": "Connexion…", "needs-login": "Connexion requise",
+                 "running": "Connecté", "error": "Erreur" };
+
+  function toast(msg, bad) {
+    var t = $("toast"); t.textContent = msg; t.className = bad ? "bad" : ""; t.style.display = "block";
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.style.display = "none"; }, 4000);
+  }
+
+  function call(method, path, body) {
+    var opts = { method: method, headers: { "X-Nodelight-Token": token } };
+    if (body !== undefined) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+    return fetch(path, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        if (!r.ok) { throw new Error(data.error || ("HTTP " + r.status)); }
+        return data;
+      });
+    });
+  }
+
+  function act(promise, okMsg) {
+    return promise.then(function (st) { render(st); if (okMsg) { toast(okMsg); } })
+                  .catch(function (e) { toast(e.message, true); refresh(); });
+  }
+
+  function show(el, text) {
+    if (text) { el.textContent = text; el.hidden = false; } else { el.hidden = true; }
+  }
+
+  function render(st) {
+    last = st;
+    var pill = $("state"); pill.textContent = LABELS[st.state] || st.state; pill.className = "pill " + st.state;
+    $("ip").textContent = st.tailscaleIp ? ("IP Tailscale : " + st.tailscaleIp) : "";
+    var live = st.state === "starting" || st.state === "needs-login" || st.state === "running";
+    $("btn-conn").textContent = live ? "Se déconnecter" : "Se connecter";
+    $("auth").hidden = !st.authUrl;
+    if (st.authUrl) { $("auth-link").href = st.authUrl; }
+    show($("warn"), st.warning); show($("err"), st.error);
+
+    // exit node list
+    var sel = $("exit-sel");
+    var key = JSON.stringify([st.exitNodes, st.exitNode]);
+    if (key !== exitKey && document.activeElement !== sel) {
+      exitKey = key;
+      while (sel.firstChild) { sel.removeChild(sel.firstChild); }
+      var add = function (value, text) { var o = document.createElement("option"); o.value = value; o.textContent = text; sel.appendChild(o); };
+      add("", "Aucun");
+      var found = st.exitNode === "";
+      (st.exitNodes || []).forEach(function (n) {
+        add(n.ip, n.name + " (" + n.ip + ")" + (n.online ? "" : " — hors ligne"));
+        if (n.ip === st.exitNode || n.name.toLowerCase() === st.exitNode.toLowerCase()) { found = true; sel.value = n.ip; }
+      });
+      add("__other__", "Autre…");
+      if (st.exitNode === "") { sel.value = ""; }
+      else if (!found) { sel.value = "__other__"; $("exit-txt").value = st.exitNode; }
+      $("exit-other").hidden = sel.value !== "__other__";
+    }
+    var info = "";
+    if (st.exitNodeIp) { info = "Actif : " + st.exitNodeIp; }
+    else if (st.exitNode) { info = "Configuré : " + st.exitNode + (st.state === "running" ? " (non appliqué)" : " (appliqué à la connexion)"); }
+    else if (st.state === "running" && !(st.exitNodes || []).length) { info = "Aucun nœud de sortie n'est proposé sur votre tailnet."; }
+    $("exit-info").textContent = info;
+
+    // hosts
+    if (!editingHosts) { renderHosts(st.hosts || []); }
+
+    // profiles
+    var ps = $("prof-sel");
+    if (document.activeElement !== ps) {
+      while (ps.firstChild) { ps.removeChild(ps.firstChild); }
+      (st.profiles || []).forEach(function (n) {
+        var o = document.createElement("option"); o.value = n; o.textContent = n === "default" ? "default (par défaut)" : n; ps.appendChild(o);
+      });
+      ps.value = st.profile;
+    }
+  }
+
+  function hostRow(h) {
+    var tr = document.createElement("tr");
+    var cell = function (child) { var td = document.createElement("td"); td.appendChild(child); tr.appendChild(td); return td; };
+    var inp = function (cls, val, ph) {
+      var i = document.createElement("input"); i.className = cls; i.value = val || ""; i.placeholder = ph || "";
+      i.autocomplete = "off"; i.spellcheck = false; i.addEventListener("input", function () { editingHosts = true; }); return i;
+    };
+    cell(inp("h-name", h.name, "bureau"));
+    cell(inp("h-addr", h.address, "desktop-pc ou 192.168.1.20"));
+    var port = inp("h-port", h.basePort ? String(h.basePort) : "", "47989"); port.inputMode = "numeric"; port.style.width = "90px";
+    cell(port);
+    var lb = document.createElement("td"); lb.className = "lb"; lb.textContent = h.loopback || ""; tr.appendChild(lb);
+    var dot = document.createElement("span"); dot.className = "dot" + (h.reachable === true ? " ok" : h.reachable === false ? " no" : "");
+    dot.title = h.reachable === true ? "Joignable" : h.reachable === false ? "Injoignable" : "Pas encore testé";
+    cell(dot);
+    var del = document.createElement("button"); del.className = "secondary"; del.textContent = "✕"; del.title = "Retirer";
+    del.addEventListener("click", function () { editingHosts = true; tr.remove(); });
+    cell(del);
+    return tr;
+  }
+
+  function renderHosts(hosts) {
+    var tb = $("hosts"); while (tb.firstChild) { tb.removeChild(tb.firstChild); }
+    hosts.forEach(function (h) { tb.appendChild(hostRow(h)); });
+  }
+
+  function collectHosts() {
+    var out = [];
+    var rows = $("hosts").querySelectorAll("tr");
+    for (var i = 0; i < rows.length; i++) {
+      var name = rows[i].querySelector(".h-name").value.trim();
+      var addr = rows[i].querySelector(".h-addr").value.trim();
+      var portTxt = rows[i].querySelector(".h-port").value.trim();
+      if (!name && !addr && !portTxt) { continue; }
+      var h = { name: name, address: addr };
+      if (portTxt) {
+        var p = parseInt(portTxt, 10);
+        if (!(p > 0 && p < 65536) || String(p) !== portTxt) { throw new Error("Port de base invalide : " + portTxt); }
+        h.basePort = p;
+      }
+      out.push(h);
+    }
+    return out;
+  }
+
+  function refresh() {
+    return call("GET", "/api/status").then(render).catch(function (e) {
+      show($("err"), "Nodelight ne répond plus (" + e.message + "). Fermez cette page.");
+    });
+  }
+
+  $("btn-conn").addEventListener("click", function () {
+    var live = last && (last.state === "starting" || last.state === "needs-login" || last.state === "running");
+    act(call("POST", live ? "/api/disconnect" : "/api/connect"));
+  });
+  $("exit-sel").addEventListener("change", function () { $("exit-other").hidden = $("exit-sel").value !== "__other__"; });
+  $("btn-exit").addEventListener("click", function () {
+    var v = $("exit-sel").value; if (v === "__other__") { v = $("exit-txt").value.trim(); }
+    exitKey = ""; act(call("POST", "/api/exit-node", { exitNode: v }), "Nœud de sortie enregistré");
+  });
+  $("btn-add").addEventListener("click", function () { editingHosts = true; $("hosts").appendChild(hostRow({})); });
+  $("btn-save").addEventListener("click", function () {
+    var hosts; try { hosts = collectHosts(); } catch (e) { toast(e.message, true); return; }
+    editingHosts = false; act(call("PUT", "/api/hosts", { hosts: hosts }), "PC enregistrés");
+  });
+  $("btn-prof").addEventListener("click", function () {
+    exitKey = ""; editingHosts = false; act(call("POST", "/api/profile/select", { name: $("prof-sel").value }), "Profil changé");
+  });
+  $("btn-prof-del").addEventListener("click", function () {
+    var n = $("prof-sel").value;
+    if (n === "default") { toast("Le profil par défaut ne peut pas être supprimé.", true); return; }
+    if (!confirm("Supprimer le profil « " + n + " » et son identité Tailscale ?")) { return; }
+    act(call("POST", "/api/profile/delete", { name: n }), "Profil supprimé");
+  });
+  $("btn-np").addEventListener("click", function () {
+    var name = $("np-name").value.trim();
+    act(call("POST", "/api/profile/create", { name: name, controlUrl: $("np-url").value.trim(), hostname: $("np-host").value.trim() }),
+        "Profil créé").then(function () { $("np-name").value = ""; $("np-url").value = ""; $("np-host").value = ""; });
+  });
+
+  refresh();
+  setInterval(function () { if (!document.hidden) { refresh(); } }, 2000);
+})();
+</script>
+</body>
+</html>

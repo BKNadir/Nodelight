@@ -1,0 +1,8 @@
+{
+  "hostname": "nodelight",
+  "exitNode": "",
+  "hosts": [
+    { "name": "bureau", "address": "desktop-pc" },
+    { "name": "salon",  "address": "100.101.102.103", "basePort": 47989 }
+  ]
+}

@@ -1,0 +1,35 @@
+NODELIGHT - Moonlight via Tailscale (portable, Windows x64)
+==========================================================
+Aucune installation, aucun droit administrateur.
+
+1. Decompressez ce dossier ou vous voulez (cle USB possible).
+2. Double-cliquez sur Nodelight.exe.
+3. Moonlight s'ouvre (aucune console). Premier lancement : la page "Tailscale" s'affiche
+   (bouton a icone Nodelight dans la barre du haut). Cliquez "Add a PC", saisissez un nom
+   et le nom Tailscale ou l'IP (100.x.y.z) de votre PC Sunshine/Apollo, "Save PCs", puis
+   "Connect". Une page web s'ouvre pour autoriser l'appareil (une seule fois ; l'identite
+   est gardee dans le dossier "data").
+4. Les PC apparaissent automatiquement dans Moonlight (127.77.0.1, .2, ...). Appairez
+   comme d'habitude (code PIN dans l'interface Sunshine/Apollo).
+5. Fermer Moonlight arrete aussi la connexion Tailscale. En cas de probleme, lisez
+   Nodelight.log (a cote de Nodelight.exe).
+
+Notes
+- Windows peut afficher un avertissement SmartScreen (application non signee) :
+  "Informations complementaires" puis "Executer quand meme".
+- Si le pare-feu Windows demande une autorisation reseau, vous pouvez annuler :
+  la connexion fonctionne quand meme sans droits administrateur.
+- PC hote SANS Tailscale, mais un autre appareil de son reseau local (Home Assistant,
+  NAS...) est sur votre tailnet comme "exit node" approuve : dans la page Tailscale,
+  entrez l'adresse LOCALE du PC (192.168.x.y) et choisissez cet appareil dans "Exit node".
+  Voir le README (section exit node) pour les details et les limites.
+- Configuration : tout se regle dans Moonlight, page "Tailscale" (connexion/deconnexion,
+  noeud de sortie, liste des PC, profils = plusieurs reseaux Tailscale).
+  Se deconnecter ou changer de profil/noeud de sortie coupe le streaming en cours.
+- Plusieurs PC : ajoutez-les dans la meme page ; le 1er est 127.77.0.1, le 2e 127.77.0.2.
+- Gardez le dossier "data" prive : il contient l'identite de cet appareil.
+- Cote PC hote : Sunshine/Apollo demarre, PC dans le meme tailnet. Rien a ouvrir
+  sur la box.
+
+Projet genere par une IA (Claude Sonnet 5.5, Anthropic), non audite par un humain.
+Non affilie a Tailscale Inc., Moonlight, Artemis ou Apollo. Licence GPL-3.0.

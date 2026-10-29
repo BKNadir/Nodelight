@@ -7,3 +7,12 @@ build/
 libs/
 config.tests/*/.qmake.stash
 config.tests/*/Makefile
+
+# Nodelight
+dist/
+data/
+hosts.json
+*.exe
+bridge/go.sum
+*.syso
+Nodelight.log

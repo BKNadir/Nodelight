@@ -1,45 +1,82 @@
----
-name: Build
+name: Build Windows x64 (portable)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
 permissions:
   contents: read
 
-on:
-  push:
-  pull_request:
-    branches:
-      - master
-
-concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
+env:
+  QT_VERSION: 6.12.0
 
 jobs:
-  setup:
+  relay-tests:
     runs-on: ubuntu-latest
-    outputs:
-      ci_version: ${{ steps.set-ci-version.outputs.ci_version }}
     steps:
-      - name: Set CI version
-        id: set-ci-version
-        shell: bash
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with: { go-version: '1.26' }
+      - name: Relay tests (race detector)
+        working-directory: bridge/relay
+        run: go test -race -count=1 ./...
+
+  windows:
+    runs-on: windows-2025
+    needs: relay-tests
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@v6
+        with: { go-version: '1.26' }
+
+      # Best effort: if this step fails the launcher is simply built without an icon.
+      - name: Embed the icon in the launcher
+        shell: pwsh
+        continue-on-error: true
         run: |
-          CI_VERSION=`echo ${GITHUB_SHA} | cut -c1-6`
-          echo "ci_version=${CI_VERSION}" >> "${GITHUB_OUTPUT}"
+          go install github.com/tc-hib/go-winres@v0.3.3
+          Push-Location bridge/cmd/nodelight
+          go-winres simply --icon ../../../assets/icon.png --manifest gui --arch amd64
+          Pop-Location
+          if (-not (Test-Path bridge/cmd/nodelight/rsrc_windows_amd64.syso)) { Write-Warning 'Nodelight.exe icon was not embedded (go-winres failed)' }
 
-  build-appimage:
-    needs: setup
-    uses: ./.github/workflows/build-appimage.yml
-    with:
-      ci_version: ${{ needs.setup.outputs.ci_version }}
+      - name: Build Nodelight.exe (bridge)
+        shell: pwsh
+        run: ./scripts/build-bridge.ps1
 
-  build-steamlink:
-    needs: setup
-    uses: ./.github/workflows/build-steamlink.yml
-    with:
-      ci_version: ${{ needs.setup.outputs.ci_version }}
+      - name: Download client dependencies
+        shell: pwsh
+        run: powershell ./setup-deps.ps1
 
-  build-windows-macos:
-    needs: setup
-    uses: ./.github/workflows/build-win-mac.yml
-    with:
-      ci_version: ${{ needs.setup.outputs.ci_version }}
+      # Same Qt setup as moonlight-qt's own CI (x64 only).
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          cache: true
+          set-env: false
+          add-tools-to-path: false
+          tools: tools_qtcreator_gui
+          version: ${{ env.QT_VERSION }}
+          aqtsource: 'git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e'
+
+      - name: Build the client (x64)
+        shell: cmd
+        run: |
+          set "PATH=%QT_PATH%;%PATH%"
+          scripts\build-arch.bat Release x64
+        env:
+          QT_PATH: ${{ runner.workspace }}\Qt\${{ env.QT_VERSION }}\msvc2022_64\bin
+
+      - name: Package portable bundle
+        shell: pwsh
+        run: ./scripts/package.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nodelight-win-x64
+          path: dist/Nodelight-win-x64.zip
+          if-no-files-found: error
