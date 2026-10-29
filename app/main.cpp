@@ -1054,6 +1054,7 @@ int main(int argc, char *argv[])
         // (and the section stays hidden) when Moonlight is started on its own.
         engine.rootContext()->setContextProperty("nodelightApi", qEnvironmentVariable("NODELIGHT_API"));
         engine.rootContext()->setContextProperty("nodelightToken", qEnvironmentVariable("NODELIGHT_TOKEN"));
+        engine.rootContext()->setContextProperty("nodelightFirstRun", qEnvironmentVariable("NODELIGHT_FIRST_RUN"));
 
         // Load the main.qml file
         engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));

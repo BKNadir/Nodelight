@@ -17,6 +17,7 @@ ApplicationWindow {
     // pages except the initial view. This is required when doing
     // a retranslate() because AppView breaks for some reason.
     property bool clearOnBack: false
+    property alias nl: nlAgent
 
     id: window
     width: 1280
@@ -104,6 +105,11 @@ ApplicationWindow {
         else {
             stackView.pop()
         }
+    }
+
+    NodelightAgent {
+        id: nlAgent
+        onOpenTailscalePage: navigateTo("qrc:/gui/TailscaleView.qml", TailscaleView)
     }
 
     StackView {
@@ -423,6 +429,26 @@ ApplicationWindow {
                 iconSource: "qrc:/res/ic_videogame_asset_white_48px.svg"
 
                 onClicked: navigateTo("qrc:/gui/GamepadMapper.qml", GamepadMapper)
+
+                Keys.onDownPressed: {
+                    stackView.currentItem.forceActiveFocus(Qt.TabFocus)
+                }
+            }
+
+            NavigableToolButton {
+                id: tailscaleButton
+                visible: nlAgent.available
+
+                iconSource: "qrc:/res/moonlight.svg"
+                // The icon is in colour: do not let the style tint it.
+                icon.color: "transparent"
+
+                ToolTip.delay: 1000
+                ToolTip.timeout: 3000
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("Tailscale (Nodelight)")
+
+                onClicked: navigateTo("qrc:/gui/TailscaleView.qml", TailscaleView)
 
                 Keys.onDownPressed: {
                     stackView.currentItem.forceActiveFocus(Qt.TabFocus)
