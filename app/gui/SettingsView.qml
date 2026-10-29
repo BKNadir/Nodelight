@@ -1025,6 +1025,210 @@ Flickable {
         }
 
         GroupBox {
+            id: nodelightGroupBox
+            width: (parent.width - (parent.leftPadding + parent.rightPadding))
+            padding: 12
+            title: "<font color=\"skyblue\">" + qsTr("Tailscale (Nodelight)") + "</font>"
+            font.pointSize: 12
+
+            // Only shown when Moonlight was started by Nodelight, which provides
+            // the address and the secret of its local control API.
+            visible: nodelightApi !== ""
+
+            property string nlState: "stopped"
+            property string nlSummary: ""
+            property string nlProblem: ""
+            property string nlAuthUrl: ""
+            property string nlExitKey: ""
+            property bool nlBusy: false
+
+            function nlCall(method, path, body, callback) {
+                nlBusy = true
+                var xhr = new XMLHttpRequest()
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState !== 4) {
+                        return
+                    }
+                    nlBusy = false
+                    var data = null
+                    try {
+                        data = JSON.parse(xhr.responseText)
+                    } catch (e) {
+                        data = null
+                    }
+                    callback(xhr.status, data)
+                }
+                xhr.open(method, nodelightApi + path)
+                xhr.setRequestHeader("X-Nodelight-Token", nodelightToken)
+                xhr.setRequestHeader("Content-Type", "application/json")
+                xhr.send(body === null ? "" : JSON.stringify(body))
+            }
+
+            function nlApply(data) {
+                nlState = data.state
+                nlAuthUrl = data.authUrl ? data.authUrl : ""
+
+                if (data.state === "running") {
+                    nlSummary = qsTr("Connected") + " (" + data.tailscaleIp + ")"
+                } else if (data.state === "starting") {
+                    nlSummary = qsTr("Connecting...")
+                } else if (data.state === "needs-login") {
+                    nlSummary = qsTr("Sign-in required")
+                } else if (data.state === "error") {
+                    nlSummary = qsTr("Error")
+                } else {
+                    nlSummary = qsTr("Disconnected")
+                }
+
+                if (data.error) {
+                    nlProblem = data.error
+                } else if (data.warning) {
+                    nlProblem = data.warning
+                } else {
+                    nlProblem = ""
+                }
+
+                // Rebuild the exit node list only when it changed, so that it does
+                // not jump while the user is choosing.
+                var key = JSON.stringify(data.exitNodes) + "|" + data.exitNode
+                if (key !== nlExitKey && !nlExitCombo.popup.visible) {
+                    nlExitKey = key
+                    nlExitModel.clear()
+                    nlExitModel.append({ "text": qsTr("None"), "val": "" })
+                    var selected = 0
+                    for (var i = 0; i < data.exitNodes.length; i++) {
+                        var node = data.exitNodes[i]
+                        nlExitModel.append({ "text": node.name + " (" + node.ip + ")", "val": node.ip })
+                        if (node.ip === data.exitNode || node.name.toLowerCase() === data.exitNode.toLowerCase()) {
+                            selected = i + 1
+                        }
+                    }
+                    if (data.exitNode !== "" && selected === 0) {
+                        // Chosen by name or address but not offered right now.
+                        nlExitModel.append({ "text": data.exitNode, "val": data.exitNode })
+                        selected = nlExitModel.count - 1
+                    }
+                    nlExitCombo.currentIndex = selected
+                    nlExitCombo.recalculateWidth()
+                }
+            }
+
+            function nlRefresh() {
+                if (nlBusy) {
+                    return
+                }
+                nlCall("GET", "/api/status", null, function(status, data) {
+                    if (status === 200 && data) {
+                        nlApply(data)
+                    } else {
+                        nlState = "error"
+                        nlSummary = qsTr("Nodelight is not responding")
+                    }
+                })
+            }
+
+            function nlAction(path, body) {
+                nlCall("POST", path, body, function(status, data) {
+                    if (status === 200 && data) {
+                        nlApply(data)
+                    } else if (data && data.error) {
+                        nlProblem = data.error
+                    } else {
+                        nlProblem = qsTr("The request failed")
+                    }
+                })
+            }
+
+            Timer {
+                interval: 2000
+                repeat: true
+                running: nodelightGroupBox.visible && settingsPage.visible
+                triggeredOnStart: true
+                onTriggered: nodelightGroupBox.nlRefresh()
+            }
+
+            Column {
+                anchors.fill: parent
+                spacing: 5
+
+                Label {
+                    width: parent.width
+                    text: qsTr("Connection: %1").arg(nodelightGroupBox.nlSummary)
+                    font.pointSize: 12
+                    wrapMode: Text.Wrap
+                }
+
+                Label {
+                    width: parent.width
+                    text: nodelightGroupBox.nlProblem
+                    font.pointSize: 12
+                    wrapMode: Text.Wrap
+                    color: "orange"
+                    visible: nodelightGroupBox.nlProblem !== ""
+                }
+
+                Row {
+                    spacing: 5
+
+                    Button {
+                        text: (nodelightGroupBox.nlState === "stopped" || nodelightGroupBox.nlState === "error") ? qsTr("Connect") : qsTr("Disconnect")
+                        enabled: !nodelightGroupBox.nlBusy
+                        onClicked: {
+                            if (nodelightGroupBox.nlState === "stopped" || nodelightGroupBox.nlState === "error") {
+                                nodelightGroupBox.nlAction("/api/connect", null)
+                            } else {
+                                nodelightGroupBox.nlAction("/api/disconnect", null)
+                            }
+                        }
+                    }
+
+                    Button {
+                        text: qsTr("Open sign-in page")
+                        visible: nodelightGroupBox.nlAuthUrl !== ""
+                        onClicked: Qt.openUrlExternally(nodelightGroupBox.nlAuthUrl)
+                    }
+                }
+
+                Label {
+                    width: parent.width
+                    text: qsTr("Exit node")
+                    font.pointSize: 12
+                    wrapMode: Text.Wrap
+                }
+
+                // Not inside a Row: AutoResizingComboBox sizes itself from its
+                // parent's width, which would create a binding loop.
+                AutoResizingComboBox {
+                    id: nlExitCombo
+                    textRole: "text"
+                    model: ListModel {
+                        id: nlExitModel
+                    }
+                }
+
+                Button {
+                    text: qsTr("Apply exit node")
+                    enabled: !nodelightGroupBox.nlBusy && nlExitModel.count > 0
+                    onClicked: {
+                        var choice = nlExitModel.get(nlExitCombo.currentIndex)
+                        nodelightGroupBox.nlExitKey = ""
+                        nodelightGroupBox.nlAction("/api/exit-node", { "exitNode": choice ? choice.val : "" })
+                    }
+                }
+
+                Button {
+                    text: qsTr("PCs, profiles and advanced settings...")
+                    onClicked: Qt.openUrlExternally(nodelightApi + "/?token=" + nodelightToken)
+
+                    ToolTip.delay: 1000
+                    ToolTip.timeout: 5000
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Opens the Nodelight settings page in your web browser")
+                }
+            }
+        }
+
+        GroupBox {
             id: uiSettingsGroupBox
             width: (parent.width - (parent.leftPadding + parent.rightPadding))
             padding: 12

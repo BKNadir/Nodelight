@@ -1049,6 +1049,12 @@ int main(int argc, char *argv[])
         engine.rootContext()->setContextProperty("initialView", initialView);
         engine.rootContext()->setContextProperty("isGuiLaunch", commandLineParserResult == GlobalCommandLineParser::NormalStartRequested);
 
+        // Nodelight passes the address and secret of its local control API so
+        // that the settings page can offer the Tailscale options. Both are empty
+        // (and the section stays hidden) when Moonlight is started on its own.
+        engine.rootContext()->setContextProperty("nodelightApi", qEnvironmentVariable("NODELIGHT_API"));
+        engine.rootContext()->setContextProperty("nodelightToken", qEnvironmentVariable("NODELIGHT_TOKEN"));
+
         // Load the main.qml file
         engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
         if (engine.rootObjects().isEmpty())
