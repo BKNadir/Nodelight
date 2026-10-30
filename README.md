@@ -1,209 +1,203 @@
 <p align="center"><img src="assets/icon.png" alt="Nodelight" width="160"></p>
 
+<p align="center"><b>English</b> · <a href="README.fr.md">Français</a> · <a href="README.nl.md">Nederlands</a> · <a href="README.de.md">Deutsch</a> · <a href="README.es.md">Español</a></p>
+
 # Nodelight
 
-Un client Moonlight **portable pour Windows** qui se connecte à votre PC Sunshine/Apollo **à travers
-Tailscale** : pas d'installation, pas de pilote, pas de droits administrateur, et aucun port à ouvrir
-sur la box.
+A **portable Moonlight client for Windows** that connects to your Sunshine/Apollo PC **through
+Tailscale**: no installation, no driver, no administrator rights, and no port to open on your
+router.
 
-> **Projet généré par une IA.** Tout le code, les scripts et la documentation de ce dépôt ont été
-> écrits par **Claude Sonnet 5.5** (Anthropic), via Claude Code, sous la direction de l'auteur du
-> dépôt (« vibe coding »). Le code n'a **pas été audité par un humain** et n'a **pas encore été testé
-> sur une machine réelle** : utilisez-le en connaissance de cause (voir « État de vérification »).
+> **AI-generated project.** All the code, scripts and documentation in this repository were written
+> by **Claude Sonnet 5.5** (Anthropic), through Claude Code, under the direction of the repository
+> owner ("vibe coding"). The code has **not been audited by a human** and has only been **partially
+> tested on a real machine** (it builds, starts and displays; a full stream through Tailscale is not
+> confirmed yet): use it at your own risk (see "Verification status").
 
-Ce dépôt est un **fork de [moonlight-qt](https://github.com/moonlight-stream/moonlight-qt)** : le code du
-client est celui de Moonlight, avec les modifications de Nodelight ajoutées en commits par-dessus
-(`git log` pour les voir). Le dépôt d'origine est configuré comme `upstream` pour récupérer ses mises à jour.
-Le reste de ce fichier décrit uniquement ce que Nodelight ajoute.
+This repository is a **fork of [moonlight-qt](https://github.com/moonlight-stream/moonlight-qt)**: the
+client code is Moonlight's, with Nodelight's changes added as commits on top (see `git log`). The
+original repository is configured as `upstream` to pull its updates. The rest of this file only
+describes what Nodelight adds.
 
-Nodelight n'est affilié ni à Tailscale Inc., ni au projet Moonlight, ni à Artemis/Apollo/Sunshine.
-Tailscale est une marque de Tailscale Inc.
+Nodelight is not affiliated with Tailscale Inc., the Moonlight project, or Artemis/Apollo/Sunshine.
+Tailscale is a trademark of Tailscale Inc.
 
-## Comment ça marche
+## How it works
 
-| Composant | Langage | Rôle |
+| Component | Language | Role |
 | --- | --- | --- |
-| `bridge/` → `Nodelight.exe` | Go | Nœud Tailscale en espace utilisateur (`tsnet`) + relais TCP/UDP local, lance Moonlight |
-| `app/`, `moonlight-common-c/`… → `client\NodelightClient.exe` | C++/Qt | Le client Moonlight modifié : mode « distant » sur le relais, option écran virtuel d'Apollo reprise d'Artemis, page Tailscale intégrée, nom et icône Nodelight |
+| `bridge/` → `Nodelight.exe` | Go | Userspace Tailscale node (`tsnet`) + local TCP/UDP relay, starts Moonlight |
+| `app/`, `moonlight-common-c/`… → `client\NodelightClient.exe` | C++/Qt | The modified Moonlight client: "remote" mode for the relay, Apollo virtual display option ported from Artemis, built-in Tailscale page, Nodelight name and icon |
 
-Moonlight diffuse en UDP (vidéo, audio, contrôle) avec des sockets bruts qui ne passent pas par un
-proxy SOCKS5, et il lit les numéros de port dans les réponses RTSP de l'hôte. Nodelight écoute donc
-**les mêmes ports que Sunshine** sur une adresse loopback dédiée par PC (`127.77.0.1`,
-`127.77.0.2`, …) et les transmet via le tailnet.
+Moonlight streams over UDP (video, audio, control) with raw sockets that cannot go through a SOCKS5
+proxy, and it reads port numbers from the host's RTSP replies. Nodelight therefore listens on **the
+same ports as Sunshine** on a dedicated loopback address per PC (`127.77.0.1`, `127.77.0.2`, …) and
+forwards them through the tailnet.
 
 ```
 Moonlight ──► 127.77.0.1:47989/47984/48010 (TCP), :47998-48002 (UDP)
-                 │  Nodelight (relais + tsnet/WireGuard, espace utilisateur)
+                 │  Nodelight (relay + tsnet/WireGuard, userspace)
                  ▼
-          PC hôte Sunshine/Apollo  (via votre tailnet)
+          Sunshine/Apollo host PC  (through your tailnet)
 ```
 
-Ports relayés par hôte (base 47989) : TCP 47984, 47989, 48010 (+ 47990 avec `--web-ui`),
+Ports relayed per host (base 47989): TCP 47984, 47989, 48010 (+ 47990 with `--web-ui`),
 UDP 47998, 47999, 48000, 48002.
 
-## Utilisation
+## Usage
 
-1. Double-cliquez sur `Nodelight.exe` : **aucune console ne s'ouvre**, Moonlight démarre directement
-   (en mode portable, fichier `portable.dat` : réglages et appairages restent dans le dossier).
-   Nodelight se ferme avec Moonlight. Ce qu'il aurait affiché est écrit dans `Nodelight.log`, et les
-   erreurs de démarrage s'affichent dans une boîte de dialogue.
-2. Au premier lancement, Moonlight ouvre sa page **Tailscale** (bouton avec l'icône Nodelight dans la
-   barre du haut) : cliquez sur **Add a PC**, saisissez un nom et le nom Tailscale ou l'IP du PC,
-   **Save PCs**, puis **Connect**.
-3. Une page web s'ouvre pour autoriser l'appareil (une seule fois). L'identité est stockée dans
-   `data\` (gardez ce dossier privé ; il peut être copié d'un PC à l'autre).
-4. Dès que la connexion est établie, les PC apparaissent **automatiquement** dans Moonlight
-   (`127.77.0.1`, `127.77.0.2`… dans l'ordre de la liste, à ne pas réordonner si des PC sont déjà
-   appairés). Appairez comme d'habitude.
+1. Double-click `Nodelight.exe`: **no console opens**, Moonlight starts directly (in portable mode,
+   thanks to a `portable.dat` file: settings and pairings stay in the folder). Nodelight closes with
+   Moonlight. What it would have printed is written to `Nodelight.log`, and startup errors are shown
+   in a dialog box.
+2. On first launch, Moonlight opens its **Tailscale** page (a button with a network icon in the top
+   bar). Click **Connect**: a web page opens to authorize the device (once). The identity is stored in
+   `data\` (keep this folder private; it can be copied from one PC to another). No PC is needed to
+   connect.
+3. Once connected, pick the **exit node** if needed (see below), then **Add a PC**: a name and the
+   Tailscale name or IP of the PC, then **Save PCs**. The PC is taken into account immediately.
+4. The PCs appear **automatically** in Moonlight (`127.77.0.1`, `127.77.0.2`… in list order; do not
+   reorder them if PCs are already paired). Pair as usual.
 
-Lancé depuis un terminal, `Nodelight.exe` écrit dans ce terminal et pose les questions du premier
-lancement (utile avec `--json` ou `--no-launch`).
+Started from a terminal, `Nodelight.exe` writes to that terminal and asks the first-run questions
+(useful with `--json` or `--no-launch`).
 
-Options utiles : `--host nom=adresse[:portBase]` (répétable), `--hostname`, `--state-dir`,
-`--no-browser`, `--json` (événements ligne par ligne), `--listen-prefix`, `--web-ui`, et
-`--control-url` pour un serveur Headscale auto-hébergé, et `--exit-node` (voir ci-dessous).
+Useful options: `--host name=address[:basePort]` (repeatable), `--hostname`, `--state-dir`,
+`--no-browser`, `--json` (line-by-line events), `--listen-prefix`, `--web-ui`, `--control-url` for a
+self-hosted Headscale server, and `--exit-node` (see below).
 
-### Page de configuration
+### Settings page
 
-Connexion, nœud de sortie, PC et profils se règlent sans éditer de fichier, de deux façons :
+Connection, exit node, PCs and profiles can be set without editing any file, in two ways:
 
-- **Dans Moonlight** : bouton **Tailscale (Nodelight)** (icône Nodelight) dans la barre du haut. La page
-  contient, avec des commandes cliquables : l'état de la connexion et **Connect / Disconnect** (plus
-  un bouton pour ouvrir la page de connexion Tailscale), le **nœud de sortie** (liste de votre tailnet
-  + **Apply exit node**), la **liste des PC** (nom, adresse, port de base, adresse locale
-  `127.77.0.N`, voyant vert quand le PC répond, **Add a PC** / ✕ / **Save PCs**) et les **profils**
-  (changer, supprimer, créer). Le bouton n'apparaît que si Moonlight a été lancé par Nodelight.
-  Une section équivalente, plus courte, reste dans Paramètres.
-- **Dans le navigateur** (secours) : l'adresse est écrite dans `Nodelight.log`
-  (`Settings page: http://127.0.0.1:PORT/?token=…`) ou dans le terminal ; même contenu.
+- **In Moonlight**: **Tailscale (Nodelight)** button (network icon) in the top bar. The page has
+  clickable controls for: the connection state and **Connect / Disconnect** (plus a button to open the
+  Tailscale sign-in page), the **exit node** (list from your tailnet + **Apply exit node**), the **PC
+  list** (name, address, base port, local address `127.77.0.N`, green dot when the PC answers,
+  **Add a PC** / ✕ / **Save PCs**) and the **profiles** (switch, delete, create). The button only
+  appears if Moonlight was started by Nodelight. A shorter equivalent section remains in Settings.
+- **In the browser** (fallback): the address is written to `Nodelight.log`
+  (`Settings page: http://127.0.0.1:PORT/?token=…`) or to the terminal; same content.
 
-Un **profil** regroupe une identité Tailscale, un nom d'appareil, un serveur de contrôle facultatif
-(Headscale) et une liste de PC. C'est ce qui permet de passer d'un réseau Tailscale à un autre ;
-chaque profil garde son identité dans `data\profiles\<nom>`, le profil par défaut reste dans `data\`.
-Les profils sont enregistrés dans `hosts.json` (les fichiers des versions précédentes restent valides).
+A **profile** groups a Tailscale identity, a device name, an optional control server (Headscale) and a
+list of PCs. It lets you switch from one Tailscale network to another; each profile keeps its
+identity in `data\profiles\<name>`, the default profile stays in `data\`. Profiles are saved in
+`hosts.json` (files from earlier versions remain valid).
 
-Notes :
-- Se déconnecter, changer de profil ou de nœud de sortie **interrompt le streaming en cours**.
-- Une valeur donnée en ligne de commande (`--exit-node`, `--host`…) s'applique au démarrage sans être
-  enregistrée ; un choix fait ensuite dans la page la remplace.
-- Sécurité : le serveur n'écoute que sur `127.0.0.1`, chaque appel exige un jeton aléatoire généré à chaque
-  lancement (transmis à Moonlight par variable d'environnement), et les requêtes dont l'en-tête `Host`
-  n'est pas l'adresse locale sont refusées (protection contre le « DNS rebinding »). Un autre programme
-  tournant sous votre session Windows peut cependant lire cet environnement : ce n'est pas une
-  frontière de sécurité contre du code déjà exécuté sur votre PC.
+Notes:
+- Disconnecting, switching profile or changing the exit node **interrupts the stream in progress**.
+- A value given on the command line (`--exit-node`, `--host`…) applies at startup without being
+  saved; a choice made afterwards in the page replaces it.
+- Security: the server only listens on `127.0.0.1`, every call requires a random token generated at
+  each launch (passed to Moonlight through an environment variable), and requests whose `Host` header
+  is not the local address are rejected (protection against "DNS rebinding"). Another program running
+  in your Windows session can still read that environment: this is not a security boundary against
+  code already running on your PC.
 
-### PC hôte qui n'est pas sur Tailscale (exit node)
+### Host PC that is not on Tailscale (exit node)
 
-Si votre PC Sunshine/Apollo n'a pas Tailscale mais qu'une autre machine de son réseau local (Home
-Assistant, NAS, Raspberry Pi…) est sur votre tailnet **en tant qu'exit node**, Nodelight peut passer
-par elle :
+If your Sunshine/Apollo PC does not have Tailscale but another machine on its local network (Home
+Assistant, NAS, Raspberry Pi…) is on your tailnet **as an exit node**, Nodelight can go through it:
 
 ```json
 {
   "exitNode": "homeassistant",
-  "hosts": [ { "name": "bureau", "address": "192.168.1.20" } ]
+  "hosts": [ { "name": "desktop", "address": "192.168.1.20" } ]
 }
 ```
 
-- `exitNode` : nom ou IP Tailscale du nœud de sortie (ou `--exit-node`). Au premier lancement,
-  Nodelight le demande après l'adresse du PC. `address` est alors l'**adresse locale** du PC hôte
-  (`192.168.x.y`), vue depuis le réseau de l'exit node.
-- L'exit node doit être approuvé dans la console d'administration Tailscale (Machines → Edit route
-  settings → Use as exit node). L'appareil `nodelight` doit avoir le droit de l'utiliser (c'est le cas
-  avec les ACL par défaut).
-- Même principe qu'une machine distante qui utilise cet exit node : si votre PC joint l'adresse locale
-  de l'hôte ainsi, Nodelight devrait le faire aussi. **Non testé** : je n'ai pas pu vérifier ici que
-  la bibliothèque `tsnet` achemine bien le trafic UDP du streaming vers une adresse locale par un exit
-  node. C'est le premier point à tester.
-- Performances : tout le flux vidéo transite par la machine exit node, en chiffrement WireGuard. Un
-  petit serveur domotique peut limiter le débit ; baissez le débit vidéo dans Moonlight si l'image
-  saccade. Si l'hôte peut recevoir Tailscale, c'est toujours plus simple et plus rapide (connexion
-  directe, adresse `100.x` ou nom MagicDNS à la place de l'IP locale et plus d'exit node).
+- `exitNode`: Tailscale name or IP of the exit node (or `--exit-node`, or the list in the Tailscale
+  page). `address` is then the host PC's **local address** (`192.168.x.y`), as seen from the exit
+  node's network.
+- The exit node must be approved in the Tailscale admin console (Machines → Edit route settings →
+  Use as exit node). The `nodelight` device must be allowed to use it (true with the default ACLs).
+- Same principle as a remote machine using that exit node: if your PC reaches the host's local
+  address that way, Nodelight should too. **Untested**: I could not verify that the `tsnet` library
+  really routes the streaming UDP traffic to a local address through an exit node. This is the first
+  thing to test.
+- Performance: the whole video stream goes through the exit node machine, WireGuard-encrypted. A
+  small home-automation server may limit the throughput; lower the video bitrate in Moonlight if the
+  picture stutters. If the host can run Tailscale, that is always simpler and faster (direct
+  connection, `100.x` address or MagicDNS name instead of the local IP, and no exit node).
 
-### Côté hôte (Sunshine/Apollo)
+### Host side (Sunshine/Apollo)
 
-- Le PC hôte doit être dans le même tailnet et allumé, avec Sunshine/Apollo démarré. Nodelight
-  indique au démarrage si chaque hôte répond sur son port HTTP.
-- Le pare-feu Windows de l'hôte doit autoriser Sunshine/Apollo sur l'interface Tailscale
-  (profil réseau concerné) ; vos ACL Tailscale doivent autoriser ces ports.
-- Sunshine n'autorise par défaut l'appairage (`origin_pin_allowed`) que depuis le réseau local :
-  si l'appairage est refusé, ajustez ce réglage ou appairez une première fois sur le LAN.
-- Pour de bonnes performances, il faut une connexion Tailscale **directe** (pas via un relais DERP) ;
-  le chiffrement WireGuard en espace utilisateur consomme un peu de CPU.
+- The host PC must be in the same tailnet and powered on, with Sunshine/Apollo running. Nodelight
+  reports at startup whether each host answers on its HTTP port.
+- The host's Windows firewall must allow Sunshine/Apollo on the Tailscale interface (relevant network
+  profile); your Tailscale ACLs must allow these ports.
+- By default Sunshine only allows pairing (`origin_pin_allowed`) from the local network: if pairing is
+  refused, adjust that setting or pair once on the LAN.
+- For good performance you need a **direct** Tailscale connection (not through a DERP relay);
+  userspace WireGuard encryption uses a little CPU.
 
-## Obtenir le build sans environnement de développement
+## Getting the build without a development environment
 
-Le binaire se construit sur les machines Windows gratuites de GitHub Actions :
+The binary is built on GitHub Actions' free Windows machines:
 
-1. Onglet **Actions** → **Build Windows x64 (portable)** → **Run workflow** (30 à 60 minutes ;
-   un `push` sur `main` le lance aussi).
-   Les anciens workflows de Moonlight (AppImage, Steam Link, signature Windows/macOS) ont été retirés
-   de ce fork : ils demandent des secrets qui n'existent pas ici.
-2. Téléchargez l'artefact `Nodelight-win-x64` (un zip), décompressez-le : c'est tout.
+1. **Actions** tab → **Build Windows x64 (portable)** → **Run workflow** (30 to 60 minutes; a `push`
+   to `master` also starts it). Moonlight's original workflows (AppImage, Steam Link, Windows/macOS
+   signing) were removed from this fork: they need secrets that do not exist here.
+2. Download the `Nodelight-win-x64` artifact (a zip) and unzip it: that is all.
 
-Le zip contient le runtime Visual C++ (copie locale) : aucun prérequis sur la machine cible.
-Aucune élévation de privilèges n'est demandée (manifeste `asInvoker`, pont en espace utilisateur,
-ports locaux > 1024 uniquement sur loopback). L'exécutable n'est pas signé : SmartScreen peut
-demander une confirmation, et le pare-feu Windows peut proposer une autorisation réseau que vous
-pouvez annuler.
+The zip contains the Visual C++ runtime (local copy): no prerequisite on the target machine. No
+privilege elevation is requested (`asInvoker` manifest, userspace bridge, local ports > 1024 on
+loopback only). The executable is not signed: SmartScreen may ask for confirmation, and the Windows
+firewall may offer a network permission that you can cancel.
 
-## Compilation manuelle (Windows x64)
+## Manual build (Windows x64)
 
-Prérequis : Go 1.26+, Git, Qt 6.11+ (MSVC), Visual Studio 2026 (ou la version requise par
-moonlight-qt), PowerShell.
+Prerequisites: Go 1.26+, Git, Qt 6.11+ (MSVC), Visual Studio 2026 (or the version moonlight-qt
+requires), PowerShell.
 
 ```powershell
 git clone --recurse-submodules https://github.com/BKNadir/Nodelight
 cd Nodelight
 .\scripts\build-bridge.ps1      # tests + dist\Nodelight.exe
 .\setup-deps.ps1
-scripts\build-arch.bat release  # depuis une invite de commandes Qt + MSVC
+scripts\build-arch.bat release  # from a Qt + MSVC command prompt
 .\scripts\package.ps1           # dist\Nodelight-win-x64.zip
 ```
 
-## Ce qui est repris d'Artemis, et ce qui ne l'est pas
+## What comes from Artemis, and what does not
 
-Artemis est un client **Android** pour Apollo. Beaucoup de ses fonctions n'ont pas de sens sur
-Windows ou existent déjà dans moonlight-qt.
+Artemis is an **Android** client for Apollo. Many of its features make no sense on Windows or already
+exist in moonlight-qt.
 
-| Fonction Artemis | État ici |
+| Artemis feature | Status here |
 | --- | --- |
-| Écran virtuel Apollo | **Fait** : case dans les réglages hôte + `--virtual-display` |
-| Résolution et débit personnalisés | Déjà présents dans moonlight-qt |
-| Commandes serveur Apollo | Non fait : nécessite le fork de `moonlight-common-c` d'Artemis (`LiSendExecServerCmd`) |
-| Synchronisation du presse-papiers | Non fait : appels HTTP `actions/clipboard` + intégration `QClipboard` à écrire |
-| Boutons virtuels, trackpad tactile, DeX, portrait, SBS 3D… | Spécifiques à Android, non applicables |
+| Apollo virtual display | **Done**: checkbox in the host settings + `--virtual-display` |
+| Custom resolution and bitrate | Already in moonlight-qt |
+| Apollo server commands | Not done: needs Artemis' fork of `moonlight-common-c` (`LiSendExecServerCmd`) |
+| Clipboard synchronization | Not done: `actions/clipboard` HTTP calls + `QClipboard` integration to write |
+| Virtual buttons, touch trackpad, DeX, portrait, SBS 3D… | Android-specific, not applicable |
 
-## État de vérification — à lire
+## Verification status — please read
 
-Vérifié dans l'environnement de développement :
-- tests du relais (TCP aller-retour avec demi-fermeture, flux UDP indépendants par client, expiration
-  des flux inactifs, liaison « tout ou rien », arrêt propre) : OK avec `-race` ;
-- tests de l'analyse de configuration, des profils et de la saisie au premier lancement ;
-- tests du contrôleur (connexion, déconnexion, connexion en attente d'autorisation, erreurs, nœud de sortie
-  à chaud, liste des PC, changement et suppression de profil) et de l'API locale (jeton, garde `Host`,
-  validation), avec un faux Tailscale, 15 exécutions de suite avec `-race` ; trois altérations volontaires
-  du code (jeton, garde `Host`, application à chaud du nœud de sortie) font bien échouer les tests ;
-- le programme compile et passe `go vet` pour `GOOS=windows` **contre une API tsnet simulée** ;
-- la logique JavaScript de la section QML a été exécutée sous Node avec les vrais JSON du code Go ;
-- la logique JavaScript de la nouvelle page Tailscale (ajout automatique des PC, listes, enregistrement) a aussi été exécutée sous Node ;
-- `Nodelight.exe` se compile en application sans console (sous-système Windows « GUI ») ; l'attache au terminal, le journal et les boîtes de dialogue n'ont pas pu être exécutés ici (pas de Windows) ;
-- les six modifications du client s'appliquent proprement sur le commit amont `3178022` de moonlight-qt.
+Verified in the development environment (without Windows):
+- relay tests (TCP round trip with half-close, independent UDP flows per client, idle flow expiry,
+  all-or-nothing binding, clean shutdown): OK with `-race`;
+- tests of configuration parsing, profiles and first-run input;
+- controller tests (connection with or without PCs, disconnection, connection waiting for
+  authorization, errors, hot exit node change, PC list, profile switch and deletion) and local API
+  tests (token, `Host` guard, validation), with a fake Tailscale, run several times with `-race`;
+- the JavaScript logic of the QML pages was run under Node with the real JSON produced by the Go code;
+- the client changes apply cleanly on moonlight-qt upstream commit `3178022`.
 
-**Non vérifié** (à tester) :
-- la compilation réelle avec `tailscale.com v1.102.5` (`go.sum` est généré par `go mod tidy`) ;
-- la compilation de moonlight-qt patché (Qt n'était pas disponible), en particulier **l'affichage de la
-  page Tailscale et de la section QML** : seuls leur équilibre syntaxique et leur logique JavaScript ont
-  été contrôlés, pas leur rendu (ni l'icône du bouton de la barre, ni celle de la fenêtre) ;
-- l'acheminement réel du trafic par un nœud de sortie avec `tsnet`, la liste des nœuds et leur sélection ;
-- le workflow GitHub Actions lui-même ;
-- un flux de streaming complet à travers Tailscale, et le comportement du pare-feu/ACL.
+Observed by the author on Windows: the GitHub Actions build completes, the application starts, the
+icons show in the right places and the Tailscale page opens inside Moonlight.
 
-Si une étape échoue, ouvrez une issue avec le message d'erreur : les causes les plus probables sont
-un décalage d'API `tsnet` (à adapter dans `bridge/cmd/nodelight/main.go`) ou un port déjà utilisé sur
-l'adresse loopback (un Sunshine local, par exemple).
+**Not verified** (to be tested):
+- the real Tailscale connection from the application (authorization, exit node list);
+- real traffic routing through an exit node with `tsnet` (UDP in particular);
+- a complete stream through Tailscale, and firewall/ACL behavior;
+- terminal attachment, the log file and the dialog boxes of `Nodelight.exe` in every case.
 
-## Licence
+If a step fails, open an issue with the error message (and `Nodelight.log`): the most likely causes
+are a `tsnet` API mismatch (to fix in `bridge/cmd/nodelight/tunnel_ts.go`) or a port already in use on
+the loopback address (a local Sunshine, for example).
 
-GPL-3.0 (voir `LICENSE`) : le code est dérivé de moonlight-qt. Attributions
-détaillées dans `licenses/NOTICE.md`.
+## License
+
+GPL-3.0 (see `LICENSE`): the code is derived from moonlight-qt. Detailed attributions in
+`licenses/NOTICE.md`.
