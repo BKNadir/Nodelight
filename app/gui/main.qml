@@ -439,9 +439,7 @@ ApplicationWindow {
                 id: tailscaleButton
                 visible: nlAgent.available
 
-                iconSource: "qrc:/res/moonlight.svg"
-                // The icon is in colour: do not let the style tint it.
-                icon.color: "transparent"
+                iconSource: "qrc:/res/network.svg"
 
                 ToolTip.delay: 1000
                 ToolTip.timeout: 3000
