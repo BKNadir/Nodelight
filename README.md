@@ -211,7 +211,8 @@ is accepted, this section will carry the line "Free code signing provided by
 - **Releases**: published on the [Releases page](https://github.com/BKNadir/Nodelight/releases) from a
   version tag; every signing request is approved manually by the maintainer.
 - **Team**: [BKNadir](https://github.com/BKNadir) is the author (committer), reviewer and approver. Changes
-  from other contributors are reviewed by the maintainer before they are merged.
+  from other contributors are reviewed by the maintainer before they are merged. Multi-factor
+  authentication (a passkey) is enabled on the maintainer's GitHub account.
 - **Upstream code**: the client is a fork of moonlight-qt; Nodelight's changes are visible as commits on
   top of the upstream history. Nothing from other projects is signed as if it were Nodelight's own,
   apart from that fork.
