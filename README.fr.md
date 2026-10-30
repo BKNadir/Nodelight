@@ -144,6 +144,10 @@ Le binaire se construit sur les machines Windows gratuites de GitHub Actions :
    de ce fork : ils demandent des secrets qui n'existent pas ici.
 2. Téléchargez l'artefact `Nodelight-win-x64` (un zip), décompressez-le : c'est tout.
 
+Pour publier une version sur la page **Releases** : poussez un tag (`git tag v0.1.0 && git push origin v0.1.0`)
+ou lancez le workflow à la main en renseignant `release_tag` (ex. `v0.1.0`). La release contient le zip
+et un fichier de sommes de contrôle `SHA256SUMS.txt` ; les versions inférieures à 1.0 sont marquées comme préversions.
+
 Le zip contient le runtime Visual C++ (copie locale) : aucun prérequis sur la machine cible.
 Aucune élévation de privilèges n'est demandée (manifeste `asInvoker`, pont en espace utilisateur,
 ports locaux > 1024 uniquement sur loopback). L'exécutable n'est pas signé : SmartScreen peut

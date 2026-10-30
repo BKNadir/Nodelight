@@ -2,6 +2,11 @@ name: Build Windows x64 (portable)
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Publish a GitHub Release with this version tag after the build (e.g. v0.1.0). Leave empty to only build.'
+        required: false
+        default: ''
   push:
     branches: [main, master]
     tags: ['v*']
@@ -82,10 +87,11 @@ jobs:
           path: dist/Nodelight-win-x64.zip
           if-no-files-found: error
 
-  # Publishes the zip as a GitHub Release when a version tag (v0.1.0...) is pushed.
-  # The build above is the only source of the release file; nothing is uploaded by hand.
+  # Publishes the zip as a GitHub Release, either when a version tag (v0.1.0...) is pushed
+  # or when the workflow is started by hand with a "release_tag". The build above is the
+  # only source of the release file; nothing is uploaded by hand.
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
     needs: windows
     runs-on: ubuntu-latest
     permissions:
@@ -97,8 +103,14 @@ jobs:
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
         run: |
-          gh release create "${{ github.ref_name }}" Nodelight-win-x64.zip \
-            --repo "${{ github.repository }}" \
-            --title "Nodelight ${{ github.ref_name }}" \
-            --generate-notes --prerelease
+          case "$TAG" in v[0-9]*) ;; *) echo "Version tags look like v0.1.0 (got '$TAG')"; exit 1;; esac
+          mv Nodelight-win-x64.zip "Nodelight-$TAG-win-x64.zip"
+          sha256sum "Nodelight-$TAG-win-x64.zip" > SHA256SUMS.txt
+          # Versions below 1.0 and versions with a suffix (v0.2.0-beta) are marked as pre-releases.
+          flag=""
+          case "$TAG" in v0.*|*-*) flag="--prerelease";; esac
+          gh release create "$TAG" "Nodelight-$TAG-win-x64.zip" SHA256SUMS.txt \
+            --repo "${{ github.repository }}" --target "${{ github.sha }}" \
+            --title "Nodelight $TAG" --generate-notes $flag

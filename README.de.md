@@ -144,6 +144,10 @@ Die Binärdatei wird auf den kostenlosen Windows-Rechnern von GitHub Actions geb
    hier nicht existieren.
 2. Lade das Artefakt `Nodelight-win-x64` (eine Zip-Datei) herunter und entpacke es: Das ist alles.
 
+Um eine Version auf der Seite **Releases** zu veröffentlichen: pushe einen Tag (`git tag v0.1.0 && git push origin v0.1.0`)
+oder starte den Workflow von Hand und trage `release_tag` ein (z. B. `v0.1.0`). Das Release enthält die Zip-Datei
+und eine Prüfsummendatei `SHA256SUMS.txt`; Versionen unter 1.0 werden als Pre-Release markiert.
+
 Die Zip-Datei enthält die Visual-C++-Laufzeit (lokale Kopie): keine Voraussetzungen auf dem
 Zielrechner. Es werden keine erhöhten Rechte angefordert (`asInvoker`-Manifest, Bridge im Userspace,
 lokale Ports > 1024 nur auf Loopback). Die ausführbare Datei ist nicht signiert: SmartScreen kann

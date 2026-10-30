@@ -143,6 +143,10 @@ Het programma wordt gebouwd op de gratis Windows-machines van GitHub Actions:
    bestaan.
 2. Download het artefact `Nodelight-win-x64` (een zip) en pak het uit: dat is alles.
 
+Om een versie op de pagina **Releases** te publiceren: push een tag (`git tag v0.1.0 && git push origin v0.1.0`)
+of start de workflow handmatig en vul `release_tag` in (bv. `v0.1.0`). De release bevat de zip en een
+controlesombestand `SHA256SUMS.txt`; versies onder 1.0 worden als pre-release gemarkeerd.
+
 De zip bevat de Visual C++-runtime (lokale kopie): geen vereisten op de doelmachine. Er worden geen
 verhoogde rechten gevraagd (`asInvoker`-manifest, bridge in userspace, lokale poorten > 1024 alleen op
 loopback). Het uitvoerbare bestand is niet ondertekend: SmartScreen kan om bevestiging vragen, en de

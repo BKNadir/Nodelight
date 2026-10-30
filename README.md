@@ -140,6 +140,10 @@ The binary is built on GitHub Actions' free Windows machines:
    signing) were removed from this fork: they need secrets that do not exist here.
 2. Download the `Nodelight-win-x64` artifact (a zip) and unzip it: that is all.
 
+To publish a version on the **Releases** page: either push a tag (`git tag v0.1.0 && git push origin v0.1.0`)
+or start the workflow by hand and fill in `release_tag` (e.g. `v0.1.0`). The release contains the zip
+and a `SHA256SUMS.txt` checksum file; versions below 1.0 are marked as pre-releases.
+
 The zip contains the Visual C++ runtime (local copy): no prerequisite on the target machine. No
 privilege elevation is requested (`asInvoker` manifest, userspace bridge, local ports > 1024 on
 loopback only). The executable is not signed: SmartScreen may ask for confirmation, and the Windows

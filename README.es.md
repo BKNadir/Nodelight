@@ -144,6 +144,10 @@ El binario se construye en las máquinas Windows gratuitas de GitHub Actions:
    firma de Windows/macOS) se han eliminado de este fork: necesitan secretos que aquí no existen.
 2. Descarga el artefacto `Nodelight-win-x64` (un zip) y descomprímelo: eso es todo.
 
+Para publicar una versión en la página **Releases**: sube una etiqueta (`git tag v0.1.0 && git push origin v0.1.0`)
+o inicia el workflow a mano rellenando `release_tag` (p. ej. `v0.1.0`). La release contiene el zip y un archivo
+de sumas de comprobación `SHA256SUMS.txt`; las versiones inferiores a 1.0 se marcan como versión preliminar.
+
 El zip contiene el runtime de Visual C++ (copia local): sin requisitos en la máquina de destino. No se
 pide elevación de privilegios (manifiesto `asInvoker`, puente en espacio de usuario, puertos locales
 > 1024 solo en loopback). El ejecutable no está firmado: SmartScreen puede pedir confirmación, y el
