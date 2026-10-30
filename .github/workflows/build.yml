@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, master]
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -80,3 +81,24 @@ jobs:
           name: Nodelight-win-x64
           path: dist/Nodelight-win-x64.zip
           if-no-files-found: error
+
+  # Publishes the zip as a GitHub Release when a version tag (v0.1.0...) is pushed.
+  # The build above is the only source of the release file; nothing is uploaded by hand.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Nodelight-win-x64
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" Nodelight-win-x64.zip \
+            --repo "${{ github.repository }}" \
+            --title "Nodelight ${{ github.ref_name }}" \
+            --generate-notes --prerelease

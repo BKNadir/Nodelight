@@ -203,6 +203,10 @@ Si falla algún paso, abre un issue con el mensaje de error (y `Nodelight.log`):
 probables son un desajuste de la API de `tsnet` (a corregir en `bridge/cmd/nodelight/tunnel_ts.go`) o
 un puerto ya en uso en la dirección loopback (un Sunshine local, por ejemplo).
 
+## Firma de código
+
+Los ejecutables **aún no están firmados** (SmartScreen puede avisar: «Más información» → «Ejecutar de todas formas»). Hay una solicitud en curso para la firma gratuita de la [SignPath Foundation](https://signpath.org/). Política completa (en inglés): [Code signing policy](README.md#code-signing-policy).
+
 ## Licencia
 
 GPL-3.0 (ver `LICENSE`): el código deriva de moonlight-qt. Atribuciones detalladas en

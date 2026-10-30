@@ -202,6 +202,10 @@ waarschijnlijke oorzaken zijn een verschil in de `tsnet`-API (aan te passen in
 `bridge/cmd/nodelight/tunnel_ts.go`) of een poort die al in gebruik is op het loopback-adres (bijvoorbeeld
 een lokale Sunshine).
 
+## Code-ondertekening
+
+De uitvoerbare bestanden zijn **nog niet ondertekend** (SmartScreen kan waarschuwen: "Meer info" → "Toch uitvoeren"). Een aanvraag voor gratis ondertekening bij de [SignPath Foundation](https://signpath.org/) is in behandeling. Volledig beleid (in het Engels): [Code signing policy](README.md#code-signing-policy).
+
 ## Licentie
 
 GPL-3.0 (zie `LICENSE`): de code is afgeleid van moonlight-qt. Gedetailleerde vermeldingen in

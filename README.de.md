@@ -204,6 +204,10 @@ wahrscheinlichsten Ursachen sind eine Abweichung der `tsnet`-API (anzupassen in
 `bridge/cmd/nodelight/tunnel_ts.go`) oder ein bereits belegter Port auf der Loopback-Adresse (zum
 Beispiel ein lokales Sunshine).
 
+## Code-Signierung
+
+Die ausführbaren Dateien sind **noch nicht signiert** (SmartScreen kann warnen: „Weitere Informationen" → „Trotzdem ausführen"). Ein Antrag auf kostenlose Signierung bei der [SignPath Foundation](https://signpath.org/) läuft. Vollständige Richtlinie (auf Englisch): [Code signing policy](README.md#code-signing-policy).
+
 ## Lizenz
 
 GPL-3.0 (siehe `LICENSE`): Der Code ist von moonlight-qt abgeleitet. Ausführliche Angaben in

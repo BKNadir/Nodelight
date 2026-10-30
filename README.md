@@ -197,6 +197,30 @@ If a step fails, open an issue with the error message (and `Nodelight.log`): the
 are a `tsnet` API mismatch (to fix in `bridge/cmd/nodelight/tunnel_ts.go`) or a port already in use on
 the loopback address (a local Sunshine, for example).
 
+## Code signing policy
+
+Status: **no signature yet**. Nodelight's Windows executables are currently unsigned, which is why
+Windows SmartScreen may warn you ("More info" → "Run anyway"). An application to the
+[SignPath Foundation](https://signpath.org/) for free open-source code signing is **pending**; if it
+is accepted, this section will carry the line "Free code signing provided by
+[SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org)".
+
+- **What is signed**: only the files of the portable release zip (`Nodelight.exe`, `client\NodelightClient.exe`),
+  and only when they were built from this repository by the public GitHub Actions workflow
+  (`.github/workflows/build.yml`). The private key never leaves the signing service.
+- **Releases**: published on the [Releases page](https://github.com/BKNadir/Nodelight/releases) from a
+  version tag; every signing request is approved manually by the maintainer.
+- **Team**: [BKNadir](https://github.com/BKNadir) is the author (committer), reviewer and approver. Changes
+  from other contributors are reviewed by the maintainer before they are merged.
+- **Upstream code**: the client is a fork of moonlight-qt; Nodelight's changes are visible as commits on
+  top of the upstream history. Nothing from other projects is signed as if it were Nodelight's own,
+  apart from that fork.
+- **Privacy**: Nodelight does not collect or send data to the project. To reach your devices it
+  contacts the Tailscale coordination server (or the Headscale server you configure) and your own
+  tailnet, as Tailscale does; it does not install anything outside its folder and has no installer
+  (delete the folder to remove it).
+- **Contact**: open an issue on this repository.
+
 ## License
 
 GPL-3.0 (see `LICENSE`): the code is derived from moonlight-qt. Detailed attributions in
