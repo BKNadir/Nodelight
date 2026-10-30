@@ -130,10 +130,10 @@ func TestAPIConnectDisconnectAndStatus(t *testing.T) {
 	}
 }
 
-func TestAPIConnectWithoutHostsIsAnError(t *testing.T) {
+func TestAPIConnectWithoutHosts(t *testing.T) {
 	a := newAPIHarness(t, fileConfig{})
 	code, out := a.do("POST", "/api/connect", nil, a.srv.token, "")
-	if code != http.StatusBadRequest || !strings.Contains(out["error"].(string), "no PC configured") {
+	if code != http.StatusOK {
 		t.Fatalf("%d %v", code, out)
 	}
 }

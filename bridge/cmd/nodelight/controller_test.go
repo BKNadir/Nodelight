@@ -202,13 +202,22 @@ func twoHosts() fileConfig {
 
 // ---- tests ----
 
-func TestConnectWithoutHostsFails(t *testing.T) {
+// Signing in and choosing an exit node must work before any PC is configured.
+func TestConnectWithoutHosts(t *testing.T) {
 	h := newHarness(t, fileConfig{}, overrides{})
-	if err := h.ctl.Connect(); !errors.Is(err, errNoHosts) {
-		t.Fatalf("got %v, want errNoHosts", err)
+	if err := h.ctl.Connect(); err != nil {
+		t.Fatalf("connect without PCs: %v", err)
 	}
-	if st := h.ctl.Status(context.Background()); st.State != stateStopped {
-		t.Fatalf("state %s", st.State)
+	st := h.waitState(stateRunning)
+	if len(st.Hosts) != 0 || len(h.relayList()) != 0 {
+		t.Fatalf("no relay expected, got hosts %v, relays %d", st.Hosts, len(h.relayList()))
+	}
+	// A PC added while connected gets its relay without reconnecting.
+	if err := h.ctl.SetHosts([]hostSpec{{Name: "bureau", Address: "192.168.1.20"}}); err != nil {
+		t.Fatal(err)
+	}
+	if got := h.relayList(); len(got) != 1 {
+		t.Fatalf("relays after adding a PC: %d", len(got))
 	}
 }
 
@@ -499,16 +508,13 @@ func TestProfiles(t *testing.T) {
 	if err := h.ctl.SelectProfile("travail"); err != nil {
 		t.Fatal(err)
 	}
-	if err := h.ctl.Connect(); !errors.Is(err, errNoHosts) {
-		t.Fatalf("got %v", err)
-	}
-	if err := h.ctl.SetHosts([]hostSpec{{Name: "bureau", Address: "10.1.1.5"}}); err != nil {
-		t.Fatal(err)
-	}
 	if err := h.ctl.Connect(); err != nil {
 		t.Fatal(err)
 	}
 	h.waitState(stateRunning)
+	if err := h.ctl.SetHosts([]hostSpec{{Name: "bureau", Address: "10.1.1.5"}}); err != nil {
+		t.Fatal(err)
+	}
 	tun := h.lastTunnel()
 	want := filepath.Join(h.base, "profiles", "travail")
 	if tun.stateDir != want || tun.profile.ControlURL != "https://hs.example.org" || tun.profile.Hostname != "pc-travail" {

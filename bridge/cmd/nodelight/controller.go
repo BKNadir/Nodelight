@@ -24,8 +24,6 @@ const (
 	stateError      state = "error"
 )
 
-var errNoHosts = errors.New("no PC configured for this profile: add one first")
-
 // closer is what the controller needs from a running relay.
 type closer interface{ Close() }
 
@@ -214,9 +212,8 @@ func (c *controller) Connect() error {
 	if err != nil {
 		return err
 	}
-	if len(prof.Hosts) == 0 {
-		return errNoHosts
-	}
+	// No PC is needed to connect: signing in and choosing an exit node come
+	// first, the PCs can be added once the tunnel is up.
 	if err := validateHosts(prof.Hosts); err != nil {
 		return err
 	}
